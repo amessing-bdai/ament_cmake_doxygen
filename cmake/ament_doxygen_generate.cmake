@@ -25,6 +25,12 @@
 #
 # :param PROJECT_NAME: Doxygen project name. Defaults to the current CMake project name.
 # :type PROJECT_NAME: string
+# :param BASE_CONFIG: Path to a template base configuration file. Non absolute paths
+#                     are resolved relative to the current CMake source directory.
+#                     Defaults to ament_cmake_doxygen's default Doxyfile. When creating your
+#                     own template configuration file, you can reference ament_cmake_doxygen's
+#                     default Doxyfile for variables that cmake will substitute.
+# :type BASE_CONFIG: string
 # :param CONFIG_OVERLAY: Path to a template overlay file. Defaults to none.
 # :type CONFIG_OVERLAY: string
 # :param CONFIG_DIRECTORY: Path to the directory holding configuration-time files e.g. configured
@@ -63,12 +69,19 @@ function(ament_doxygen_generate target_name)
   cmake_parse_arguments(
     args
     "STANDALONE;NO_INSTALL;TEST_ON_WARNS"
-    "PROJECT_NAME;CONFIG_OVERLAY;CONFIG_DIRECTORY;INPUT_DIRECTORY;BUILD_DIRECTORY;INSTALL_DIRECTORY"
+    "PROJECT_NAME;BASE_CONFIG;CONFIG_OVERLAY;CONFIG_DIRECTORY;INPUT_DIRECTORY;BUILD_DIRECTORY;INSTALL_DIRECTORY"
     "DEPENDENCIES" ${ARGN})
 
   if (NOT DEFINED args_PROJECT_NAME)
     set(args_PROJECT_NAME "${PROJECT_NAME}")
   endif()
+
+  if (NOT DEFINED args_BASE_CONFIG)
+    set(args_BASE_CONFIG "${AMENT_CMAKE_DOXYGEN_RESOURCES_DIR}/Doxyfile.in")
+  endif()
+  get_filename_component(args_BASE_CONFIG "${args_BASE_CONFIG}"
+    REALPATH BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
+  )
 
   if (NOT DEFINED args_CONFIG_DIRECTORY)
     set(args_CONFIG_DIRECTORY "ament_cmake_doxygen/${PROJECT_NAME}")
@@ -111,6 +124,7 @@ function(ament_doxygen_generate target_name)
 
   set(doxyfile "${args_CONFIG_DIRECTORY}/Doxyfile")
   ament_doxygen_generate_configuration("${doxyfile}"
+    BASE_CONFIG "${args_BASE_CONFIG}"
     CONFIG_OVERLAY "${args_CONFIG_OVERLAY}"
     CONFIG_DIRECTORY "${args_CONFIG_DIRECTORY}"
     BUILD_DIRECTORY "${args_BUILD_DIRECTORY}"
